@@ -122,5 +122,5 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 ## Authors
 
-- Naresh Zubiarrain `N7r3te`, you can contact me by  `Github` ([N7r3te](https://github.com/Narete)), `twitter` ([@Narete_](https://x.com/Narete_)) or by [Linkedin](https://www.linkedin.com/in/naresh-zubiarrain-torreño-a62070239/)
+- Naresh Zubiarrain `N7r3te`, you can contact me by  `Github` ([N7r3te](https://github.com/Narete)) or by [Linkedin](https://www.linkedin.com/in/naresh-zubiarrain-torreño-a62070239/)
 - Dimas Pastor `pip0x`, you can contact me by `Github` ([pip0x](https://github.com/pip0x/)) or by [Linkedin](https://www.linkedin.com/in/dimas-pastor/)
