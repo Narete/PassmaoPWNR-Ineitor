@@ -398,7 +398,7 @@ if args.action == "search":
             print(f"La ruta {args.filehashesh} no existe")
     else:
         print("Necessary parameters for search action / Parametros requeridos para la acción search : -f/--filehashesh, -p/--pathblocs y -of/--ouputfile")
-        print("Optional parameters / Parametros Opcionales: -t/--bloctype")
+        print("Optional parameters / Parametros Opcionales: -T/--bloctype, -t/--threads")
 #-------------------------------------------------------
 # Acción de generateBlocs con sus diferentes parametros
 #-------------------------------------------------------
@@ -417,7 +417,7 @@ elif args.action == "generateBlocs":
             print(f"La ruta {args.brutefile} no existe")          
     else:
         print("Necessary parameters for generateBloks action / Parametros requeridos para la acción generateBlocks :  -b/--brutefile, -p/--pathblocs ")
-        print("Optional parameters /  Parametros Opcionales: -t/--bloctype y -s/--blocsize")
+        print("Optional parameters /  Parametros Opcionales: -T/--bloctype y -s/--blocsize")
 #-------------------------------------------------------
 # Acción de sort con sus diferentes parametros
 #-------------------------------------------------------
