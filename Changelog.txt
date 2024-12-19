@@ -49,3 +49,7 @@ V1.0.2
 - [x] Change the function to print the progress for a progress bar
 - [x] Fix error where the script sometimes doesn't use all the blocks
 
+V1.0.3
+
+- [x]  You are now able to finish threads propperly
+
