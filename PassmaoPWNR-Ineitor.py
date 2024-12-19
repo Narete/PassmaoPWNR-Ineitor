@@ -6,7 +6,7 @@ import math
 import threading
 import psutil
 
-# Definir funciones para cada acción
+# Define functions with each action
 def banner():
     print("""
                                      ##***####                                                        
@@ -70,7 +70,7 @@ By pip0x & N7r3te\n\n""")
 #DestruyePassGuatos-Ineitor v1.0 baino lehenagoko bertsioetan
 
 #-------------------------------------------------------
-#Carga de indice para las busquedas
+#Loads the search index for the blocs
 #-------------------------------------------------------
 def cargar_indice(pathToBlocs):
     indice = []
@@ -84,28 +84,26 @@ def cargar_indice(pathToBlocs):
 
 
 #-------------------------------------------------------
-#Ordenación de hashesh NTLM previo a busqueda
+#The sorting of the hashes preceding the search
 #-------------------------------------------------------
 def ordenar_hashes_ntlm(input_file):
     if "txt" in input_file:                                         
-        try:                                                                #Comprobacion de si se trata de un archivo con hashes o de un solo hash pasado por parametro
-            # Leer los hashes desde el archivo de entrada
+        try:                                                                #See if the input is a hashfile or a single file
+            # Read the hashes from the input file
             with open(input_file, 'r') as file:
                 hashes = file.readlines()
             
-            # Eliminar los saltos de línea (\n) de cada hash
+            # Remove the (\n) of each line
             hashes = [hash.strip() for hash in hashes]
 
-            # Ordenar los hashes en orden ascendente
-            hashes.sort()  # Ordena la lista de hashes directamente
+            # Sort the hashes in ascendant order
+            hashes.sort()  
 
-            # Sobrescribir el archivo con los hashes ordenados
-            # with open(input_file+'.ordenado.txt', 'w') as file:
             new_hashes=[]
             for hash in hashes:
                 if len(hash) > 40:
                     hash=hash.strip(':')
-                    hash=hash[(len(hash)-32):]                              #Los hash ntlm son de 32 caracteres de longitud por lo que se corta justo 
+                    hash=hash[(len(hash)-32):]                              #NTLM hashes are 32 chars long, so this way we can extract them from the string
                     new_hashes.append(hash)
                     new_hashes = sorted(new_hashes)
                 else:
@@ -114,14 +112,13 @@ def ordenar_hashes_ntlm(input_file):
                     new_hashes = sorted(new_hashes)
                     new_hashes = set(new_hashes)
 
-                    # file.write(f"{hash}\n")
         except Exception as e:
             print(f"Ocurrió un error ordenando: {e}")
     else:
-        new_hashes = [input_file]                                           #Se introcude el hash unico como elemento de lista para evitar problemas con el resto del script
+        new_hashes = [input_file]                                           #The single hash is put inside a list to avoid problems with the indexing and search functions
     return new_hashes
 # ====================================================================================
-# Busqueda de hashes en los bloques
+# Search of the hashes in the blocs
 # ====================================================================================
 contador = 0
 def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, pathToBlocs): 
@@ -130,11 +127,11 @@ def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, p
     for archivo_bloque in bloques_requeridos:
         ruta_bloque = os.path.join(pathToBlocs, archivo_bloque)    
         
-        # Descomprimir el bloque
+        # decompress the blocs
         with open(ruta_bloque, "rb") as f:
             datos_descomprimidos = blosc.decompress(f.read()).decode("utf-8")           
                     
-        # Buscar hashes en el bloque descomprimido
+        # search if the hashes of the block are in the searched files list
         
         for linea in datos_descomprimidos.splitlines():            
             hash_actual, valor = linea.split(":", 1)
@@ -145,25 +142,24 @@ def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, p
                 contador += 1
                 
     with open(archivo_resultado, "a", encoding="utf-8") as archivo:
-        archivo.writelines(escribir)                                        #El archivo se abre y escribe al final para reducir la cantidad de interacciones en este y así ganar velocidad
+        archivo.writelines(escribir)                                        #The file is opened at the end to reduce interactions and increase speed
 
 
 #-------------------------------------------------------
-#Bloque de busqueda mediante Blosc
+#Search using Blosc
 #-------------------------------------------------------
 
 def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, threads):
     start_time = time.time()
-    # Cargar hashes y el índice
+    # Load the hashes and the index
     print(f"[+]Ordenando hashes del archivo en:{archivo_hashes}")
     hashes_buscados = ordenar_hashes_ntlm(archivo_hashes)
     print(f"[+]Cargando hashes del archivo en:{archivo_hashes}")
-    # hashes_buscados = set(linea.strip() for linea in open(archivo_hashes+'.ordenado.txt', "r", encoding="utf-8"))
     print(f"[+]Cargando indice en:{pathToBlocs}\index.txt")
     indice, comprobacion = cargar_indice(pathToBlocs+"\index.txt")
     
     
-    # Filtrar bloques relevantes
+    # Set the variable to 'set' type so that it removes repetitions and orders the list
     bloques_requeridos =  set()
    
     
@@ -172,9 +168,9 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
     
 
 #-------------------------------------------------------
-#Busqueda con indice unico
+#Single indexed search
 #-------------------------------------------------------   
-    if comprobacion != 'txt':
+    if comprobacion != 'txt':                                           
         null,null,bloc = indice[1]
         tamaño_bloque = os.stat(pathToBlocs+'\\'+bloc).st_size
         for hash_buscado in hashes_buscados:
@@ -185,7 +181,7 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
         
 
 #-------------------------------------------------------
-#Busqueda con doble indice
+#Double indexed search
 #-------------------------------------------------------
     elif comprobacion == 'txt':
         tamaño_bloque = os.stat(pathToBlocs+'\\'+bloc).st_size
@@ -199,16 +195,16 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
                             bloques_requeridos.add(archivo_bloque)
                             break
     """
-    La busqueda con doble indice es mas rapida en casos donde hay muchos bloques ya que se minimiza la cantidad maxima de lineas a buscar,
-    por ejemplo si hay 10000 bloques, en caso de tener un solo indice hay 10000 lineas en las que buscar. En cambio, si se tiene un indice
-    de 100 lineas con otros 100 subindices de 100 lineas cada uno la cantidad maxima de lineas se reduce a 200
+    The double index search is faster in cases where there are many blocks because the maximum number of lines to search is minimized,
+    for example if there are 10000 blocks, in case of having a single index there are 10000 lines to search. On the other hand, if you 
+    have an index of 100 lines with another 100 sub-indexes of 100 lines each, the maximum number of lines is reduced to 200.
     """
     bloques_requeridos=list(bloques_requeridos)
-    numero_de_threads = threads
+    numero_de_threads = threads                                                                                                 #If more threads more fast
     mem = psutil.virtual_memory()
     totalMem = mem.total
     
-    if numero_de_threads*(tamaño_bloque*1.66) > totalMem:
+    if numero_de_threads*(tamaño_bloque*1.66) > totalMem:                                                                       #Tryes stoping you from burning your house
         proceed = input("You are using to many threads and gonna fry you compunter, do you want to proceed?[Y]/[N]\nEstas usando demasiados hilos y vas a destrozar el ordenador, quieres continuar?[Y]/[N]\n")
         if proceed.upper == "Y":
             return
@@ -219,15 +215,15 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
             quit()
             
     decimo = int(len(bloques_requeridos)/numero_de_threads)
-    for i in range(numero_de_threads+1):                                                                                        #Crear los diferentes gupos de bloques y respectivos threads usando un loop for 
+    for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
         locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]
         locals()[f'thread+{i}']=threading.Thread(
-            target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs)          #Establecer los parametros de la funcion para el thread
+            target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs)          #Establish parameters for the thread function to use
         )
     for i in range(numero_de_threads+1):
-        locals()[f'thread+{i}'].start()                                                                                         #Iniciar los thread secuencialmente usando un for
+        locals()[f'thread+{i}'].start()                                                                                         #Start the threads secuentialy using a for loop
     for i in range(numero_de_threads+1):
-        locals()[f'thread+{i}'].join()                                                                                          #Juntar los thread secuencialmente
+        locals()[f'thread+{i}'].join()                                                                                          #Join the threads
     
     print('\n--------------------------------------------------------------------')
     print("Se han tardado %s segundos" % (time.time() - start_time))
@@ -240,7 +236,7 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
    
 
 #-------------------------------------------------------
-#Generación de bloques mediante Blosc
+#Generate diferent blocs using blosc
 #-------------------------------------------------------
 def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_000):
     if not os.path.exists(ruta_salida):
@@ -256,7 +252,7 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
 
     print(f"\nAmeniza la espera con un buen video: https://www.youtube.com/watch?v=jNIBs02p-Ks\n")
 
-    indice = []  # Lista para almacenar el índice
+    indice = []  # creation of the diferent variables
     menor_hash = None
     mayor_hash = None
     numero_bloque = 1
@@ -265,10 +261,10 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
 
     with open(archivo_entrada, "r", encoding="utf-8") as archivo:
         for linea in archivo:
-            # Dividir la línea en hash NTLM y el valor (antes del ':')
+            # Divide the line in the hash and value
             hash_ntlm, valor = linea.strip().split(":", 1)
             
-            # Actualizar el hash menor y mayor
+            # Update the lowest and highest hashes
             if menor_hash is None or hash_ntlm < menor_hash:
                 menor_hash = hash_ntlm
             if mayor_hash is None or hash_ntlm > mayor_hash:
@@ -278,15 +274,15 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
             tam_actual += len(linea)
 
             if tam_actual >= int(tam_bloque):
-                # Crear bloque comprimido
+                # Create compressed block
                 nombre_bloque = os.path.join(ruta_salida, f"bloque_{numero_bloque}.blosc")
                 datos_comprimidos = blosc.compress("".join(buffer).encode("utf-8"), cname="zstd", clevel=9)
                 
-                # Escribir el bloque comprimido en el archivo
+                # Write the comrpessed block into the file
                 with open(nombre_bloque, "wb") as f:
                     f.write(datos_comprimidos)
                 
-                # Registrar la información en el índice en el formato requerido
+                # Register the info into the index
                 indice.append(f"{menor_hash},{mayor_hash},bloque_{numero_bloque}.blosc\n")
                 
                 print(f"[-]Escrbiendo archivo bloque_{numero_bloque}.blosc escrito")
@@ -294,32 +290,32 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
                 buffer = []
                 tam_actual = 0
 
-                # Resetear los valores de menor y mayor hash
+                # Reset the lower and higher hash values
                 menor_hash = None
                 mayor_hash = None
 
         if buffer:
-            # Crear el último bloque comprimido si hay datos restantes
+            # Create the last block if they are pending values
             nombre_bloque = os.path.join(ruta_salida, f"bloque_{numero_bloque}.blosc")
             datos_comprimidos = blosc.compress("".join(buffer).encode("utf-8"), cname="zstd", clevel=9)
             
-            # Escribir el último bloque comprimido
+            # write the last compressed block
             with open(nombre_bloque, "wb") as f:
                 f.write(datos_comprimidos)
             print(f"[+]Archivo bloque_{numero_bloque}.blosc escrito")
 
-            # Registrar el índice del último bloque
+            # Register the last block into the index
             indice.append(f"{menor_hash},{mayor_hash},bloque_{numero_bloque}.blosc\n")
 
-    # Escribir el índice en un archivo
+    # Write the index into a file
     indice_padre=[]
     longitud = len(indice)
-    len_maximo_para_subindice = 500                                         #Tamaño minimo subindice para que merezca la pena hacer doble indice
+    len_maximo_para_subindice = 500                                         #Minimum size of an index to create a double index
 #-------------------------------------------------------
-#Creación de doble indice
+#Create a double index
 #-------------------------------------------------------
-    if longitud >= len_maximo_para_subindice:                                                       #Crear doble indice para mas velocidad, fiuuuum
-        tamaño_subindice=round(math.sqrt(longitud))                                                 #Cambiar tamaño de subindice
+    if longitud >= len_maximo_para_subindice:                                                       #Create double index for faster search, fiuuuum
+        tamaño_subindice=round(math.sqrt(longitud))                                                 #set the size of the index to the sqrt of the total length of the index to minimize searches
         repeticiones = int(math.floor((longitud+tamaño_subindice)/tamaño_subindice))
         for i in range(repeticiones):
                 minimo=int((i*tamaño_subindice)+1)
@@ -337,7 +333,7 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
         with open(ruta_index, "w", encoding="utf-8") as f:
             f.writelines(indice_padre)
 #-------------------------------------------------------
-#Creación de indice simple
+#Create simple indes(for slow loosers)
 #-------------------------------------------------------
     else:
         ruta_index = os.path.join(ruta_salida, "index.txt")
@@ -347,12 +343,12 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
     print(f"[+]Archivo dividido y comprimido en {numero_bloque} bloques.")
     print(f"[+]Índice de bloques guardado en {ruta_index}")
 
-# Crear el analizador de argumentos
+# Create the arg parser
 
 banner()
 parser = argparse.ArgumentParser(description="Gestor de acciones")
 
-# Parámetros de entrada principales
+# Main params
 parser.add_argument("action", type=str, help="Selected action / Acción a realizar: search, generateBlocs, sort")
 parser.add_argument("-f","--filehashesh", type=str, help="File with the hashes / Archivo con hashesh para crackear")
 parser.add_argument("-H","--hash", type=str, help="Individual hash / Hash individual a encontrar")
@@ -365,13 +361,13 @@ parser.add_argument("-t","--threads", default=1, type=int, help="Simultaneous th
 
 
 
-# Parsear los argumentos
+# Parse the args 
 args = parser.parse_args()
 
-# Asignar acción según el parámetro 'action'
+# Set the acction depending on 'action'
 
 #-------------------------------------------------------
-# Acción de Search con sus diferentes parametros
+# Search action
 #-------------------------------------------------------
 if args.action == "search":
     if (args.filehashesh or args.hash is not None) and args.pathblocs is not None and args.ouputfile is not None:
@@ -382,14 +378,14 @@ if args.action == "search":
                 if args.bloctype != "blosc" and args.bloctype != "txt" :
                      print("[-] Solo se acepta los valores blosc o txt para el parametro -t/--bloctype")
                 if args.bloctype == "blosc":
-                    # Busqueda por blosc
+                    # search with blosc
                     if args.filehashesh is None:
                         buscar_hashes_ntlm_blosc(args.hash,args.pathblocs, args.ouputfile, args.threads)
                     else:
                         buscar_hashes_ntlm_blosc(args.filehashesh,args.pathblocs, args.ouputfile, args.threads)
 
                 if args.bloctype == "txt":
-                    # Busqueda por txt
+                    # Search with txt
                     print("[-] Acción no implementada")
                     #buscar_hashes_ntlm_txt(args.filehashesh,args.pathblocs, args.ouputfile)
             else:
@@ -400,7 +396,7 @@ if args.action == "search":
         print("Necessary parameters for search action / Parametros requeridos para la acción search : -f/--filehashesh, -p/--pathblocs y -of/--ouputfile")
         print("Optional parameters / Parametros Opcionales: -T/--bloctype, -t/--threads")
 #-------------------------------------------------------
-# Acción de generateBlocs con sus diferentes parametros
+# GenerateBlocs action
 #-------------------------------------------------------
 
 elif args.action == "generateBlocs":
@@ -419,7 +415,7 @@ elif args.action == "generateBlocs":
         print("Necessary parameters for generateBloks action / Parametros requeridos para la acción generateBlocks :  -b/--brutefile, -p/--pathblocs ")
         print("Optional parameters /  Parametros Opcionales: -T/--bloctype y -s/--blocsize")
 #-------------------------------------------------------
-# Acción de sort con sus diferentes parametros
+# Sort action
 #-------------------------------------------------------
 elif args.action == "sort":
     if args.brutefile is None:
