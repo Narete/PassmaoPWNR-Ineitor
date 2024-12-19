@@ -51,5 +51,5 @@ V1.0.2
 
 V1.0.3
 
-- [x]  You are now able to finish threads propperly
+- [ ]  You are now able to finish threads propperly
 
