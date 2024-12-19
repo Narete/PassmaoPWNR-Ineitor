@@ -1,0 +1,51 @@
+v0.0.1
+
+- [x] Make the script work with 😇 parameters (package 📦)
+
+V0.0.3
+
+- [x] Merge create blosc together with create index
+- [x] Make multiindexing for faster searches when generating blobs
+- [x] Facilitate cracking of untreated ntds and accept treated ntds as well.
+- [x] Output of how long it took for the search to be done
+- [x] Make searches work on single index as well as when multiindexed
+
+V0.0.4
+
+- [x] Clean up duplicate hashes to be queried, so that they are unique and do not repeat actions.
+- [x] Find the optimal number of indexes for the script to search faster.
+
+V0.0.5
+
+- [x] Add final counter of how many hashes have been cracked out of the total, for screen print only.
+- [x] Make optimized search work with a single hash provided by parameter.
+- [x] Make multi threading for more speed with many blocks.
+
+V0.1.0
+
+- x] Automate multi threading.
+- x] Pass amount of threads per command parameter
+
+V0.1.1
+
+- [x] Comment the code to make it easier to understand and repair it
+- [x] Minor fixes
+
+V1.0.0
+
+- [x] Put it in English / Spanish
+- [x] Prevent it from using more RAM than what is available
+- [x] Create the README.md
+- [x] Create the requirements.txt
+- [x] Choose license
+- [x] Upload it to Github
+
+V1.0.1
+
+- [x] Translate the notes to english
+
+V1.0.2
+
+- [x] Change the function to print the progress for a progress bar
+- [x] Fix error where the script sometimes doesn't use all the blocks
+
