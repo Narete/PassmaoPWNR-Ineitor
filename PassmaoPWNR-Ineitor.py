@@ -5,6 +5,7 @@ import time
 import math
 import threading
 import psutil
+from alive_progress import alive_bar
 
 # Define functions with each action
 def banner():
@@ -121,7 +122,8 @@ def ordenar_hashes_ntlm(input_file):
 # Search of the hashes in the blocs
 # ====================================================================================
 contador = 0
-def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, pathToBlocs): 
+def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, pathToBlocs,bar): 
+    # print('Thread_iniciado')
     bloques_requeridos, hashes_buscados = list(set(bloques_requeridos)), set(hashes_buscados)
     escribir = []  
     for archivo_bloque in bloques_requeridos:
@@ -136,11 +138,11 @@ def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, p
         for linea in datos_descomprimidos.splitlines():            
             hash_actual, valor = linea.split(":", 1)
             if hash_actual in hashes_buscados:
-                print(f"{hash_actual}:{valor}")
+                # print(f"{hash_actual}:{valor}")                
                 escribir.append(f"{hash_actual}:{valor}\n")
                 global contador
                 contador += 1
-                
+        bar()       
     with open(archivo_resultado, "a", encoding="utf-8") as archivo:
         archivo.writelines(escribir)                                        #The file is opened at the end to reduce interactions and increase speed
 
@@ -215,22 +217,23 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
             quit()
             
     decimo = math.ceil(len(bloques_requeridos)/numero_de_threads)
-    for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
-        locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]
-        locals()[f'thread+{i}']=threading.Thread(
-            target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs)          #Establish parameters for the thread function to use
-        )
-    for i in range(numero_de_threads+1):
-        locals()[f'thread+{i}'].start()                                                                                         #Start the threads secuentialy using a for loop
-    for i in range(numero_de_threads+1):
-        locals()[f'thread+{i}'].join()                                                                                          #Join the threads
-    
+    with alive_bar(len(bloques_requeridos)) as bar:                                                                                 #Stetic shit
+        for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
+            locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]
+            locals()[f'thread+{i}']=threading.Thread(
+                target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs,bar),daemon=True                                                                                                     #Establish parameters for the thread function to use
+            )
+        for i in range(numero_de_threads+1):                                                                                        #Start the threads secuentialy using a for loop
+            locals()[f'thread+{i}'].start()                                                                                         #Start the threads secuentialy using a for loop
+        for i in range(numero_de_threads+1):
+            locals()[f'thread+{i}'].join(len(bloques_requeridos))                                                                                          #Join the threads
+    time.sleep(1)
     print('\n--------------------------------------------------------------------')
     print("Se han tardado %s segundos" % (time.time() - start_time))
     print('--------------------------------------------------------------------')
-    print(f'{contador} hashes encontrados')
+    print('\x1b[0;36;40m'+f'{contador}'+'\x1b[0m'+' hashes encontrados')
     print('--------------------------------------------------------------------')
-    print(f'Los resultados se han guardado en {archivo_resultado}')
+    print('Los resultados se han guardado en '+'\x1b[0;34;40m'+f'{archivo_resultado}'+'\x1b[0m')
     print('--------------------------------------------------------------------\n\n')
     print(f"[+]MALDITO SEAS PERRY EL ORNITORRINCO...")
    
@@ -258,54 +261,60 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
     numero_bloque = 1
     buffer = []
     tam_actual = 0
+    tamaño_archivo_grande = os.stat(archivo_entrada).st_size
+    cantidad_bloques = int(round(tamaño_archivo_grande/tam_bloque,0))
+
 
     with open(archivo_entrada, "r", encoding="utf-8") as archivo:
-        for linea in archivo:
-            # Divide the line in the hash and value
-            hash_ntlm, valor = linea.strip().split(":", 1)
-            
-            # Update the lowest and highest hashes
-            if menor_hash is None or hash_ntlm < menor_hash:
-                menor_hash = hash_ntlm
-            if mayor_hash is None or hash_ntlm > mayor_hash:
-                mayor_hash = hash_ntlm
-            
-            buffer.append(linea)
-            tam_actual += len(linea)
+        with alive_bar(cantidad_bloques) as bar:
+            for linea in archivo:
+                # Divide the line in the hash and value
+                hash_ntlm, valor = linea.strip().split(":", 1)
+                
+                # Update the lowest and highest hashes
+                if menor_hash is None or hash_ntlm < menor_hash:
+                    menor_hash = hash_ntlm
+                if mayor_hash is None or hash_ntlm > mayor_hash:
+                    mayor_hash = hash_ntlm
+                
+                buffer.append(linea)
+                tam_actual += len(linea)
 
-            if tam_actual >= int(tam_bloque):
-                # Create compressed block
+                if tam_actual >= int(tam_bloque):
+                    # Create compressed block
+                    nombre_bloque = os.path.join(ruta_salida, f"bloque_{numero_bloque}.blosc")
+                    datos_comprimidos = blosc.compress("".join(buffer).encode("utf-8"), cname="zstd", clevel=9)
+                    
+                    # Write the comrpessed block into the file
+                    with open(nombre_bloque, "wb") as f:
+                        f.write(datos_comprimidos)
+                    
+                    # Register the info into the index
+                    indice.append(f"{menor_hash},{mayor_hash},bloque_{numero_bloque}.blosc\n")
+                    
+                    # print(f"[-]Escrbiendo archivo bloque_{numero_bloque}.blosc escrito")
+                    bar()                   #Just fancy graphics
+                    numero_bloque += 1
+                    buffer = []
+                    tam_actual = 0
+
+                    # Reset the lower and higher hash values
+                    menor_hash = None
+                    mayor_hash = None
+
+            if buffer:
+                # Create the last block if they are pending values
                 nombre_bloque = os.path.join(ruta_salida, f"bloque_{numero_bloque}.blosc")
                 datos_comprimidos = blosc.compress("".join(buffer).encode("utf-8"), cname="zstd", clevel=9)
                 
-                # Write the comrpessed block into the file
+                # write the last compressed block
                 with open(nombre_bloque, "wb") as f:
                     f.write(datos_comprimidos)
-                
-                # Register the info into the index
+                # print(f"[+]Archivo bloque_{numero_bloque}.blosc escrito")
+                bar()
+                # Register the last block into the index
                 indice.append(f"{menor_hash},{mayor_hash},bloque_{numero_bloque}.blosc\n")
-                
-                print(f"[-]Escrbiendo archivo bloque_{numero_bloque}.blosc escrito")
-                numero_bloque += 1
-                buffer = []
-                tam_actual = 0
-
-                # Reset the lower and higher hash values
-                menor_hash = None
-                mayor_hash = None
-
-        if buffer:
-            # Create the last block if they are pending values
-            nombre_bloque = os.path.join(ruta_salida, f"bloque_{numero_bloque}.blosc")
-            datos_comprimidos = blosc.compress("".join(buffer).encode("utf-8"), cname="zstd", clevel=9)
-            
-            # write the last compressed block
-            with open(nombre_bloque, "wb") as f:
-                f.write(datos_comprimidos)
-            print(f"[+]Archivo bloque_{numero_bloque}.blosc escrito")
-
-            # Register the last block into the index
-            indice.append(f"{menor_hash},{mayor_hash},bloque_{numero_bloque}.blosc\n")
+                bar()
 
     # Write the index into a file
     indice_padre=[]
