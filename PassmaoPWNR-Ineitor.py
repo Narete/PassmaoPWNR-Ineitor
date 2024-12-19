@@ -214,7 +214,7 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
             print("You didn't peek any / No has escogido ninguna")
             quit()
             
-    decimo = int(len(bloques_requeridos)/numero_de_threads)
+    decimo = math.ceil(len(bloques_requeridos)/numero_de_threads)
     for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
         locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]
         locals()[f'thread+{i}']=threading.Thread(
