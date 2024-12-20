@@ -146,12 +146,13 @@ def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, p
     with open(archivo_resultado, "a", encoding="utf-8") as archivo:
         archivo.writelines(escribir)                                        #The file is opened at the end to reduce interactions and increase speed
 
-
+def has_live_threads(threads):
+    return True in [t.is_alive() for t in threads]
 #-------------------------------------------------------
 #Search using Blosc
 #-------------------------------------------------------
 
-def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, threads):
+def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, threads=1):
     start_time = time.time()
     # Load the hashes and the index
     print(f"[+]Ordenando hashes del archivo en:{archivo_hashes}")
@@ -205,28 +206,39 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
     numero_de_threads = threads                                                                                                 #If more threads more fast
     mem = psutil.virtual_memory()
     totalMem = mem.total
-    
-    if numero_de_threads*(tamaño_bloque*1.66) > totalMem:                                                                       #Tryes stoping you from burning your house
-        proceed = input("You are using to many threads and gonna fry you compunter, do you want to proceed?[Y]/[N]\nEstas usando demasiados hilos y vas a destrozar el ordenador, quieres continuar?[Y]/[N]\n")
-        if proceed.upper == "Y":
-            return
-        elif proceed.upper == "N":
-            quit()
-        else:
-            print("You didn't peek any / No has escogido ninguna")
-            quit()
-            
-    decimo = math.ceil(len(bloques_requeridos)/numero_de_threads)
-    with alive_bar(len(bloques_requeridos)) as bar:                                                                                 #Stetic shit
-        for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
-            locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]
-            locals()[f'thread+{i}']=threading.Thread(
-                target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs,bar),daemon=True                                                                                                     #Establish parameters for the thread function to use
-            )
-        for i in range(numero_de_threads+1):                                                                                        #Start the threads secuentialy using a for loop
-            locals()[f'thread+{i}'].start()                                                                                         #Start the threads secuentialy using a for loop
-        for i in range(numero_de_threads+1):
-            locals()[f'thread+{i}'].join(len(bloques_requeridos))                                                                                          #Join the threads
+    if threads != 1:
+        if numero_de_threads*(tamaño_bloque*1.66) > totalMem:                                                                       #Tryes stoping you from burning your house
+            proceed = input("You are using to many threads and gonna fry you compunter, do you want to proceed?[Y]/[N]\nEstas usando demasiados hilos y vas a destrozar el ordenador, quieres continuar?[Y]/[N]\n")
+            if proceed.upper == "Y" or proceed == 'y':
+                return
+            elif proceed.upper == "N" or proceed == 'n':
+                quit()
+            else:
+                print("You didn't peek any / No has escogido ninguna")
+                quit()
+        threads_list = []       
+        decimo = math.ceil(len(bloques_requeridos)/numero_de_threads)
+        with alive_bar(len(bloques_requeridos)) as bar:                                                                                 #Stetic shit
+            for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
+                locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]
+                locals()[f'thread+{i}']=threading.Thread(
+                    target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs,bar)      #Establish parameters for the thread function to use
+                )
+                locals()[f'thread+{i}'].start()                                                                                         #Start the threads secuentialy using a for loop
+                threads_list.append(locals()[f'thread+{i}'])
+            while has_live_threads(threads_list):
+                try:
+                    [t.join(1) for t in threads_list
+                     if t is not None and t.is_alive()]
+                except KeyboardInterrupt:
+                    print ("[-] Stopping all the threads...")
+                    for t in threads:
+                        t.kill_received = True
+                    quit()
+                    
+    else:
+        with alive_bar(len(bloques_requeridos)) as bar:
+            busqueda_de_hashes(bloques_requeridos,hashes_buscados, archivo_resultado, pathToBlocs, bar)
     time.sleep(1)
     print('\n--------------------------------------------------------------------')
     print("Se han tardado %s segundos" % (time.time() - start_time))
