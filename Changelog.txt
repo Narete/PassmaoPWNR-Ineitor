@@ -23,8 +23,8 @@ V0.0.5
 
 V0.1.0
 
-- x] Automate multi threading.
-- x] Pass amount of threads per command parameter
+- [x] Automate multi threading.
+- [x] Pass amount of threads per command parameter
 
 V0.1.1
 
@@ -51,5 +51,5 @@ V1.0.2
 
 V1.0.3
 
-- [ ]  You are now able to finish threads propperly
+- [x]  You are now able to finish threads propperly
 
