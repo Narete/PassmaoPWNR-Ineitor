@@ -265,7 +265,7 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
    \     /_/
     `---""")
 
-    print(f"\nAmeniza la espera con un buen video: https://www.youtube.com/watch?v=jNIBs02p-Ks\n")
+    print(f"\nAmeniza la espera con un buen video: https://www.youtube.com/watch?v=Igw90hTQXws\n")
 
     indice = []  # creation of the diferent variables
     menor_hash = None
