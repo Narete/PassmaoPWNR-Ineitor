@@ -187,12 +187,12 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
 #Double indexed search
 #-------------------------------------------------------
     elif comprobacion == 'txt':
-        tamaño_bloque = os.stat(pathToBlocs+'\\'+bloc).st_size
         for hash_buscado in hashes_buscados:
             for hash_inicio, hash_fin, index in indice:
                 if hash_inicio <= hash_buscado <= hash_fin:
                     indice2, nulo = cargar_indice(pathToBlocs+"\\"+index)
                     null,null,bloc = indice2[1]
+                    tamaño_bloque = os.stat(pathToBlocs+'\\'+bloc).st_size
                     for hash_inicio, hash_fin, archivo_bloque in indice2:
                         if hash_inicio <= hash_buscado <= hash_fin:
                             bloques_requeridos.add(archivo_bloque)
