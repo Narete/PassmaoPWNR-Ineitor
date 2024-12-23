@@ -53,3 +53,7 @@ V1.0.3
 
 - [x]  You are now able to finish threads propperly
 
+V1.0.4
+
+- [x] Fix error where couldn't use multithreading on certain devices
+
