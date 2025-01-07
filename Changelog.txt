@@ -57,3 +57,8 @@ V1.0.4
 
 - [x] Fix error where couldn't use multithreading on certain devices
 
+V1.0.5 (WIP)
+
+- [x] The user will be able to switch between a progress bar and printing all the cracked hashes
+- [ ] Fixes will be made to enable the code to stop on verbose mode
+
