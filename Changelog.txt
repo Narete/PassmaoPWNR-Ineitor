@@ -62,3 +62,7 @@ V1.0.5 (WIP)
 - [ ] The user will be able to switch between a progress bar and printing all the cracked hashes
 - [ ] Fixes will be made to enable the code to stop on verbose mode
 
+
+
+
+Last update : [2025/01/07]
