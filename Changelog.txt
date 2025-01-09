@@ -65,4 +65,4 @@ V1.0.5 (WIP)
 
 
 
-Last update : [2025/01/07]
+Last update : [2025/01/09]
