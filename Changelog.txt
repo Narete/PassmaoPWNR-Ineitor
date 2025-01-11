@@ -61,9 +61,9 @@ V1.0.5 (WIP)
 
 - [x] The user will be able to switch between a progress bar and printing all the cracked hashes
 - [-] Fixes will be made to enable the code to stop on verbose mode
-- [ ] Work in progress on a rust version of the tool
+- [ ] Working on a Rust version of the tool
 
 
 
 
-Last update : [2025/01/10]
+Last update : [2025/01/11]
