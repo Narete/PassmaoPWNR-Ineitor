@@ -7,6 +7,7 @@ import threading
 import psutil
 from alive_progress import alive_bar
 
+
 # Define functions with each action
 def banner():
     print("""
@@ -92,10 +93,11 @@ def ordenar_hashes_ntlm(input_file):
         try:                                                                #See if the input is a hashfile or a single file
             # Read the hashes from the input file
             with open(input_file, 'r') as file:
-                hashes = file.readlines()
+                # hashes = file.readlines()
+                hashes = [line.strip() for line in file]
             
             # Remove the (\n) of each line
-            hashes = [hash.strip() for hash in hashes]
+            # hashes = [hash.strip() for hash in hashes]
 
             # Sort the hashes in ascendant order
             hashes.sort()  
@@ -123,6 +125,7 @@ def ordenar_hashes_ntlm(input_file):
 # ====================================================================================
 contador = 0
 def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, pathToBlocs,bar): 
+    global contador
     # print('Thread_iniciado')
     bloques_requeridos, hashes_buscados = list(set(bloques_requeridos)), set(hashes_buscados)
     escribir = []  
@@ -136,12 +139,15 @@ def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, p
         # search if the hashes of the block are in the searched files list
         
         for linea in datos_descomprimidos.splitlines():            
-            hash_actual, valor = linea.split(":", 1)
+            # hash_actual, valor = linea.split(":",1)
+            partes = linea.split(":",1)
+            hash_actual, valor = partes
             if hash_actual in hashes_buscados:
                 # print(f"{hash_actual}:{valor}")                
                 escribir.append(f"{hash_actual}:{valor}\n")
-                global contador
+                # global contador
                 contador += 1
+
         bar()       
     with open(archivo_resultado, "a", encoding="utf-8") as archivo:
         archivo.writelines(escribir)                                        #The file is opened at the end to reduce interactions and increase speed
@@ -181,7 +187,7 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
                 if hash_inicio <= hash_buscado <= hash_fin:
                     bloques_requeridos.add(archivo_bloque)
                     break
-        
+                
 
 #-------------------------------------------------------
 #Double indexed search
@@ -197,6 +203,7 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
                         if hash_inicio <= hash_buscado <= hash_fin:
                             bloques_requeridos.add(archivo_bloque)
                             break
+                        
     """
     The double index search is faster in cases where there are many blocks because the maximum number of lines to search is minimized,
     for example if there are 10000 blocks, in case of having a single index there are 10000 lines to search. On the other hand, if you 
