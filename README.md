@@ -8,8 +8,7 @@ It makes use of `blosc` to divide the wordlists and it uses indexes to reduce to
 ![image](https://github.com/user-attachments/assets/31e383c2-b2e6-4a35-bf4b-f0e3c45a2b38)
 
 
-Made in Spanish and English, and it only requires to install `blosc`, every other package is native from python
-
+Made in Spanish and English.
 
 
 ## Quick usage
