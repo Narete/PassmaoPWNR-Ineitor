@@ -1,4 +1,5 @@
 ES={
+    "verbose":"La opcion verbose no funciona correctamente y evita que se pueda parar el multithreading en caso de que se este usando, desea continuar?[Y]/[N]\n",
     "ordenar":"[+]Ordenando hashes del archivo en: %s",
     "cargar":"[+]Cargando hashes del archivo en: %s",
     "cargar_index":"[+]Cargando indice en: %s",
@@ -16,6 +17,7 @@ ES={
     
 }
 EN={
+    "verbose":"The verbose option is currently broken and prevents de user from stopping the proccess if multithreading is active, do you want to proceed?[Y]/[N]\n",
     "ordenar":"[+]Sorting file hashes into: %s",
     "cargar":"[+]Loading file hashes into: %s",
     "cargar_index":"[+]Loading index at: %s",
@@ -33,6 +35,7 @@ EN={
 
 }
 EUS={
+    "verbose":"Verbose aukera ez doa ondo, eta aukeratuta badago erabiltzaileak ezin du prozeua eten multithread aukera aiktibatuta badago. Jarraitu nahi al duzu?[Y]/[N]\n",
     "ordenar":"[+]%s fitxategian hash-ak ordenatzen",
     "cargar":"[+]%s fitxategitik hash-ak kargatzen",
     "cargar_index":"[+]%s fitxategian aurkibidea kargarzen",

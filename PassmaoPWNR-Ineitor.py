@@ -171,6 +171,15 @@ def has_live_threads(threads):
 
 def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, hizkuntza, threads=1, verbose = 0):
     start_time = time.time()
+    if verbose == 1 and threads>1:
+        proceed = input(hizkuntza["verbose"])
+        if proceed.upper == "Y" or proceed == 'y':
+            exit
+        elif proceed.upper == "N" or proceed == 'n':
+            quit()
+        else:
+            print(hizkuntza["sin_escoger"])
+            quit()
     # Load the hashes and the index
 
     #Language selection:
