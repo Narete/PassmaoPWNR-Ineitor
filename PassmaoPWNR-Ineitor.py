@@ -6,7 +6,7 @@ import math
 import threading
 import psutil
 from alive_progress import alive_bar
-
+import languages
 
 # Define functions with each action
 def banner():
@@ -93,11 +93,10 @@ def ordenar_hashes_ntlm(input_file):
         try:                                                                #See if the input is a hashfile or a single file
             # Read the hashes from the input file
             with open(input_file, 'r') as file:
-                # hashes = file.readlines()
-                hashes = [line.strip() for line in file]
+                hashes = file.readlines()
             
             # Remove the (\n) of each line
-            # hashes = [hash.strip() for hash in hashes]
+            hashes = [hash.strip() for hash in hashes]
 
             # Sort the hashes in ascendant order
             hashes.sort()  
@@ -125,30 +124,42 @@ def ordenar_hashes_ntlm(input_file):
 # ====================================================================================
 contador = 0
 def busqueda_de_hashes(bloques_requeridos, hashes_buscados, archivo_resultado, pathToBlocs,bar): 
-    global contador
     # print('Thread_iniciado')
     bloques_requeridos, hashes_buscados = list(set(bloques_requeridos)), set(hashes_buscados)
-    escribir = []  
-    for archivo_bloque in bloques_requeridos:
-        ruta_bloque = os.path.join(pathToBlocs, archivo_bloque)    
-        
-        # decompress the blocs
-        with open(ruta_bloque, "rb") as f:
-            datos_descomprimidos = blosc.decompress(f.read()).decode("utf-8")           
-                    
-        # search if the hashes of the block are in the searched files list
-        
-        for linea in datos_descomprimidos.splitlines():            
-            # hash_actual, valor = linea.split(":",1)
-            partes = linea.split(":",1)
-            hash_actual, valor = partes
-            if hash_actual in hashes_buscados:
-                # print(f"{hash_actual}:{valor}")                
-                escribir.append(f"{hash_actual}:{valor}\n")
-                # global contador
-                contador += 1
-
-        bar()       
+    escribir = [] 
+    global contador
+    if bar != None:
+        for archivo_bloque in bloques_requeridos:
+            ruta_bloque = os.path.join(pathToBlocs, archivo_bloque)    
+            
+            # decompress the blocs
+            with open(ruta_bloque, "rb") as f:
+                datos_descomprimidos = blosc.decompress(f.read()).decode("utf-8")           
+                        
+            # search if the hashes of the block are in the searched files list
+            for linea in datos_descomprimidos.splitlines():            
+                hash_actual, valor = linea.split(":", 1)
+                if hash_actual in hashes_buscados:
+                    # print(f"{hash_actual}:{valor}")                
+                    escribir.append(f"{hash_actual}:{valor}\n")                    
+                    contador += 1
+            bar()
+    else:
+        for archivo_bloque in bloques_requeridos:
+            ruta_bloque = os.path.join(pathToBlocs, archivo_bloque)    
+            
+            # decompress the blocs
+            with open(ruta_bloque, "rb") as f:
+                datos_descomprimidos = blosc.decompress(f.read()).decode("utf-8")           
+                        
+            # search if the hashes of the block are in the searched files list
+            for linea in datos_descomprimidos.splitlines():            
+                hash_actual, valor = linea.split(":", 1)
+                if hash_actual in hashes_buscados:
+                    print(f"{hash_actual}:{valor}")                
+                    escribir.append(f"{hash_actual}:{valor}\n")
+                    contador += 1
+                
     with open(archivo_resultado, "a", encoding="utf-8") as archivo:
         archivo.writelines(escribir)                                        #The file is opened at the end to reduce interactions and increase speed
 
@@ -158,13 +169,17 @@ def has_live_threads(threads):
 #Search using Blosc
 #-------------------------------------------------------
 
-def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, threads=1):
+def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, hizkuntza, threads=1, verbose = 0):
     start_time = time.time()
     # Load the hashes and the index
-    print(f"[+]Ordenando hashes del archivo en:{archivo_hashes}")
+
+    #Language selection:
+
+
+    print(hizkuntza["ordenar"] % archivo_hashes)
     hashes_buscados = ordenar_hashes_ntlm(archivo_hashes)
-    print(f"[+]Cargando hashes del archivo en:{archivo_hashes}")
-    print(f"[+]Cargando indice en:{pathToBlocs}\index.txt")
+    print(hizkuntza["cargar"] % archivo_hashes)
+    print(hizkuntza["cargar_index"] % (pathToBlocs+"\index.txt"))
     indice, comprobacion = cargar_indice(pathToBlocs+"\index.txt")
     
     
@@ -173,7 +188,7 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
    
     
     
-    print(f"[+]Buscando...")
+    print(f'{hizkuntza["buscar"]}')
     
 
 #-------------------------------------------------------
@@ -187,7 +202,7 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
                 if hash_inicio <= hash_buscado <= hash_fin:
                     bloques_requeridos.add(archivo_bloque)
                     break
-                
+        
 
 #-------------------------------------------------------
 #Double indexed search
@@ -203,7 +218,6 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
                         if hash_inicio <= hash_buscado <= hash_fin:
                             bloques_requeridos.add(archivo_bloque)
                             break
-                        
     """
     The double index search is faster in cases where there are many blocks because the maximum number of lines to search is minimized,
     for example if there are 10000 blocks, in case of having a single index there are 10000 lines to search. On the other hand, if you 
@@ -215,56 +229,76 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, thr
     totalMem = mem.total
     if threads != 1:
         if numero_de_threads*(tamaño_bloque*1.66) > totalMem:                                                                       #Tryes stoping you from burning your house
-            proceed = input("You are using to many threads and gonna fry you compunter, do you want to proceed?[Y]/[N]\nEstas usando demasiados hilos y vas a destrozar el ordenador, quieres continuar?[Y]/[N]\n")
+            proceed = input(hizkuntza["alerta_threads"])
             if proceed.upper == "Y" or proceed == 'y':
                 return
             elif proceed.upper == "N" or proceed == 'n':
                 quit()
             else:
-                print("You didn't peek any / No has escogido ninguna")
+                print(hizkuntza["sin_escoger"])
                 quit()
         threads_list = []       
         decimo = math.ceil(len(bloques_requeridos)/numero_de_threads)
-        with alive_bar(len(bloques_requeridos)) as bar:                                                                                 #Stetic shit
+        if verbose == 1:
             for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
-                locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]
+                locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]   
                 locals()[f'thread+{i}']=threading.Thread(
-                    target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs,bar)      #Establish parameters for the thread function to use
+                    target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs,None)      #Establish parameters for the thread function to use
                 )
                 locals()[f'thread+{i}'].start()                                                                                         #Start the threads secuentialy using a for loop
                 threads_list.append(locals()[f'thread+{i}'])
             while has_live_threads(threads_list):
                 try:
                     [t.join(1) for t in threads_list
-                     if t is not None and t.is_alive()]
+                    if t is not None and t.is_alive()]
                 except KeyboardInterrupt:
-                    print ("[-] Stopping all the threads...")
+                    print (hizkuntza["keyboard_interrupt"])
                     for t in threads:
                         t.kill_received = True
                     quit()
+        else:
+            with alive_bar(len(bloques_requeridos)) as bar:                                                                                 #Stetic shit
+                for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
+                    locals()[f'bloque+{i}']=bloques_requeridos[decimo*(i-1):decimo*i]   
+                    locals()[f'thread+{i}']=threading.Thread(
+                        target=busqueda_de_hashes, args=(locals()[f'bloque+{i}'], hashes_buscados, archivo_resultado, pathToBlocs,bar)      #Establish parameters for the thread function to use
+                    )
+                    locals()[f'thread+{i}'].start()                                                                                         #Start the threads secuentialy using a for loop
+                    threads_list.append(locals()[f'thread+{i}'])
+                while has_live_threads(threads_list):
+                    try:
+                        [t.join(1) for t in threads_list
+                        if t is not None and t.is_alive()]
+                    except KeyboardInterrupt:
+                        print (hizkuntza["keyboard_interrupt"])
+                        for t in threads:
+                            t.kill_received = True
+                        quit()
                     
     else:
-        with alive_bar(len(bloques_requeridos)) as bar:
-            busqueda_de_hashes(bloques_requeridos,hashes_buscados, archivo_resultado, pathToBlocs, bar)
+        if verbose == 0:
+            with alive_bar(len(bloques_requeridos)) as bar:
+                busqueda_de_hashes(bloques_requeridos,hashes_buscados, archivo_resultado, pathToBlocs, bar)
+        else:        
+            busqueda_de_hashes(bloques_requeridos,hashes_buscados, archivo_resultado, pathToBlocs, None)
     time.sleep(1)
     print('\n--------------------------------------------------------------------')
-    print("Se han tardado %s segundos" % (time.time() - start_time))
+    print(hizkuntza["results_tiempo"] % (time.time() - start_time))
     print('--------------------------------------------------------------------')
-    print('\x1b[0;36;40m'+f'{contador}'+'\x1b[0m'+' hashes encontrados')
+    print('\x1b[0;36;40m'+f'{contador}'+'\x1b[0m'+' hashes '+ hizkuntza["encontrados"])
     print('--------------------------------------------------------------------')
-    print('Los resultados se han guardado en '+'\x1b[0;34;40m'+f'{archivo_resultado}'+'\x1b[0m')
+    print(hizkuntza["archivo_resultados"]%(' \x1b[0;34;40m'+f'{archivo_resultado}'+'\x1b[0m'))
     print('--------------------------------------------------------------------\n\n')
-    print(f"[+]MALDITO SEAS PERRY EL ORNITORRINCO...")
+    print(hizkuntza["PERRY"])
    
 
 #-------------------------------------------------------
 #Generate diferent blocs using blosc
 #-------------------------------------------------------
-def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_000):
+def crear_bloques_comprimidos(archivo_entrada, ruta_salida, hizkuntza,tam_bloque=100_000_000):
     if not os.path.exists(ruta_salida):
         os.makedirs(ruta_salida)
-    print(f"\n[+]Empieza lo bueno...\n")
-    print(f"""Let's have a coffee break...
+    print(f"""\nLet's have a coffee break...
     (((
      )))
    _______
@@ -272,7 +306,7 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
    \     /_/
     `---""")
 
-    print(f"\nAmeniza la espera con un buen video: https://www.youtube.com/watch?v=Igw90hTQXws\n")
+    print(f"\n{hizkuntza['ameniza_espera']}: https://www.youtube.com/watch?v=eTLq7j7ZrYM\n")
 
     indice = []  # creation of the diferent variables
     menor_hash = None
@@ -324,7 +358,7 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
             if buffer:
                 # Create the last block if they are pending values
                 nombre_bloque = os.path.join(ruta_salida, f"bloque_{numero_bloque}.blosc")
-                datos_comprimidos = blosc.compress("".join(buffer).encode("utf-8"), cname="zstd", clevel=9)
+                datos_comprimidos = blosc.compress("".join(buffer).encode("utf-8"), cname="zstd", clevel=9)   #compression level from 0(min) to 9 (max)
                 
                 # write the last compressed block
                 with open(nombre_bloque, "wb") as f:
@@ -368,8 +402,8 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, tam_bloque=100_000_0
         with open(ruta_index, "w", encoding="utf-8") as f:
             f.writelines(indice)
 
-    print(f"[+]Archivo dividido y comprimido en {numero_bloque} bloques.")
-    print(f"[+]Índice de bloques guardado en {ruta_index}")
+    print(hizkuntza["cantidad_de_bloques"]+ {numero_bloque})
+    print(hizkuntza["indice_de_bloques"]+ {ruta_index})
 
 # Create the arg parser
 
@@ -386,6 +420,7 @@ parser.add_argument("-T","--bloctype", default="blosc", type=str, help="Blocks f
 parser.add_argument("-b","--brutefile", type=str, help="File with the precalculated hashes / Archivo con hashesh")
 parser.add_argument("-s","--blocsize", default=100_000_000, type=int, help="Size of each block in bytes / Tamaño de cada bloque en bytes.\n Default: 100000000")
 parser.add_argument("-t","--threads", default=1, type=int, help="Simultaneous threads used / Cantidad de procesos simultaneos\n Default: 1")
+parser.add_argument("-v","--verbose", default=0, type=int, help="Shows the hashes-blocks while they are being proccesed/Enseña los hash-bloques mientras son prodesados\n Default: 0")
 
 
 
@@ -393,10 +428,17 @@ parser.add_argument("-t","--threads", default=1, type=int, help="Simultaneous th
 args = parser.parse_args()
 
 # Set the acction depending on 'action'
-
+#--------------------
+# Language selection
+#--------------------
+hizkuntza = input("Select language/Seleccione un idioma:\n 1.-English\n 2.-Español\n 3.-Euskera\n")
+if hizkuntza == "1":hizkuntza = languages.EN 
+elif hizkuntza == "2":hizkuntza = languages.ES
+elif hizkuntza == "3":hizkuntza = languages.EUS 
 #-------------------------------------------------------
 # Search action
 #-------------------------------------------------------
+
 if args.action == "search":
     if (args.filehashesh or args.hash is not None) and args.pathblocs is not None and args.ouputfile is not None:
         if args.filehashesh is None: hashpath = "C:"
@@ -408,9 +450,9 @@ if args.action == "search":
                 if args.bloctype == "blosc":
                     # search with blosc
                     if args.filehashesh is None:
-                        buscar_hashes_ntlm_blosc(args.hash,args.pathblocs, args.ouputfile, args.threads)
+                        buscar_hashes_ntlm_blosc(args.hash,args.pathblocs, args.ouputfile, hizkuntza, args.threads, args.verbose)
                     else:
-                        buscar_hashes_ntlm_blosc(args.filehashesh,args.pathblocs, args.ouputfile, args.threads)
+                        buscar_hashes_ntlm_blosc(args.filehashesh,args.pathblocs, args.ouputfile, hizkuntza, args.threads, args.verbose)
 
                 if args.bloctype == "txt":
                     # Search with txt
@@ -434,7 +476,7 @@ elif args.action == "generateBlocs":
                 if args.bloctype != "blosc" and args.bloctype != "txt" :
                     print("[-] Solo se acepta los valores blosc o txt para el parametro -t/--bloctype")
                 if args.bloctype == "blosc":                   
-                    crear_bloques_comprimidos(args.brutefile, args.pathblocs,args.blocsize)
+                    crear_bloques_comprimidos(args.brutefile, args.pathblocs, hizkuntza, args.blocsize)
             else:
                 print(f"La ruta {args.pathblocs} no existe")
         else:
