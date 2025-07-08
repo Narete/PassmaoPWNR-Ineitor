@@ -171,16 +171,7 @@ def has_live_threads(threads):
 
 def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, hizkuntza, threads=1, verbose = 0):
     start_time = time.time()
-    if verbose == 1 and threads>1:
-        proceed = input(hizkuntza["verbose"])
-        if proceed.upper == "Y" or proceed == 'y':
-            exit
-        elif proceed.upper == "N" or proceed == 'n':
-            quit()
-        else:
-            print(hizkuntza["sin_escoger"])
-            quit()
-    # Load the hashes and the index
+
 
     #Language selection:
 
@@ -265,6 +256,7 @@ def buscar_hashes_ntlm_blosc(archivo_hashes, pathToBlocs, archivo_resultado, hiz
                     for t in threads:
                         t.kill_received = True
                     quit()
+                    os._exit
         else:
             with alive_bar(len(bloques_requeridos)) as bar:                                                                                 #Stetic shit
                 for i in range(numero_de_threads+1):                                                                                        #Create the threads by using a loop
@@ -411,8 +403,8 @@ def crear_bloques_comprimidos(archivo_entrada, ruta_salida, hizkuntza,tam_bloque
         with open(ruta_index, "w", encoding="utf-8") as f:
             f.writelines(indice)
 
-    print(hizkuntza["cantidad_de_bloques"]+ {numero_bloque})
-    print(hizkuntza["indice_de_bloques"]+ {ruta_index})
+    print(f'{hizkuntza["cantidad_de_bloques"]}  {numero_bloque}')
+    print(f'{hizkuntza["indice_de_bloques"]}  {ruta_index}')
 
 # Create the arg parser
 
